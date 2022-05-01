@@ -1,0 +1,614 @@
+jQuery(document).ready(function () {
+  function isValidEmailAddress(emailAddress) {
+    var pattern = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/i;
+    return pattern.test(emailAddress);
+  }
+
+  jQuery("#support-form").on("change", "input, select", function (e) {
+    jQuery("#send-support-ticket").removeAttr("disabled");
+  });
+/*** DUPLICATE SEND TO TICKETTELLER, DISABLING THIS SEND AS WORK AROUND 
+  jQuery("#send-support-ticket").on("click", function (e) {
+    // Reset validation errors from BE
+    jQuery(".validation-error").hide();
+
+    // Validate the form before submission
+    var missingField = false;
+    if (!isValidEmailAddress(jQuery("#person_email").val()) || jQuery("#person_email").val() == "") {
+      jQuery(".validate-email").css("display", "block");
+      missingField = true;
+    } else {
+      jQuery(".validate-email").css("display", "none");
+    }
+    if (jQuery("#category_id").val() == "") {
+      jQuery(".validate-category").css("display", "block");
+      missingField = true;
+    } else {
+      jQuery(".validate-category").css("display", "none");
+    }
+    if (jQuery("#ticket-subject").val() == "") {
+      jQuery(".validate-subject").css("display", "block");
+      jQuery("#validate-subject-length").hide();
+
+      missingField = true;
+    } else if (jQuery("#ticket-subject").val().length > 100) {
+      jQuery(".validate-subject").css("display", "none");
+      jQuery("#validate-subject-length").show();
+
+      missingField = true;
+    } else {
+      jQuery(".validate-subject").css("display", "none");
+      jQuery("#validate-subject-length").hide();
+    }
+    if (jQuery("#ticket-message").val() == "") {
+      jQuery(".validate-message").css("display", "block");
+      missingField = true;
+    } else {
+      jQuery(".validate-message").css("display", "none");
+    }
+    if (missingField == true) {
+      return false;
+    }
+    jQuery("#send-support-ticket").attr("disabled", "disabled").val("Please wait...");
+    jQuery
+      .ajax({
+        method: "POST",
+        url: "/wp-json/skng/v1/ticket",
+        data: constructPayload(jQuery("#support-form").serializeArray()),
+      })
+      .done(function (resp) {
+        window.location.href = window.location.origin + "/ticket/created";
+      })
+      .fail(function (jqXHR, textStatus) {
+        console.log(textStatus);
+      });
+    return true;
+  });**/
+
+  function constructPayload(formArray) {
+    const payload = {};
+    formArray.forEach((e) => {
+      payload[e.name] = e.value;
+    });
+    return payload;
+  }
+
+  function checkBirthdate() {
+    var bdM = document.getElementById("month").value;
+
+    var bdD = document.getElementById("day").value;
+
+    var bdY = document.getElementById("year").value;
+
+    var dateNow = new Date(Date.now());
+    var month = Number(bdM);
+    var day = Number(bdD);
+    var year = Number(bdY);
+
+    var birthDate = new Date(year, month, day);
+    var yearDiff = dateNow.getFullYear() - birthDate.getFullYear();
+    var currentMonth = dateNow.getMonth() + 1 === birthDate.getMonth();
+    var dayBeforeToday = birthDate.getDate() <= dateNow.getDate();
+
+    if (yearDiff > 18 || (yearDiff >= 18 && birthDate.getMonth() < dateNow.getMonth()) || (yearDiff >= 18 && currentMonth && dayBeforeToday)) {
+      return true;
+    } else {
+      var bdErrEl = document.getElementById("birthdate-error");
+      if (bdErrEl !== null) {
+        bdErrEl.style.display = "block";
+        var birthEl = document.getElementsByClassName("birth");
+        for (var i = 0; i < birthEl.length; i++) {
+          birthEl[i].className = "birth input-error";
+        }
+      }
+      return false;
+    }
+
+    return false;
+  }
+
+  function checkEmail() {
+    var emailEl = document.getElementById("email");
+    var emailErrEl = document.getElementById("email-error");
+    var reg = /^[a-zA-Z0-9.!#$%&'*+\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])*(\.\w{2,3})+$/;
+
+    if (emailEl !== null && reg.test(emailEl.value)) {
+      return true;
+    } else {
+      if (emailErrEl !== null) {
+        emailErrEl.style.display = "block";
+      }
+      emailEl.className = "email input-error";
+      return false;
+    }
+  }
+
+  function resetErrors() {
+    var emailEl = document.getElementById("email");
+    var emailErrEl = document.getElementById("email-error");
+    var bdErrEl = document.getElementById("birthdate-error");
+
+    if (emailErrEl !== null) {
+      emailErrEl.style.display = "none";
+    }
+    emailEl.className = "email";
+
+    if (bdErrEl !== null) {
+      bdErrEl.style.display = "none";
+      var birthEl = document.getElementsByClassName("birth");
+      for (var i = 0; i < birthEl.length; i++) {
+        birthEl[i].className = "birth";
+      }
+    }
+  }
+
+  function checkForm() {
+    resetErrors();
+    if (checkBirthdate() && checkEmail()) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  let rand = function () {
+    return Math.random().toString(36).substr(2);
+  };
+
+  let token = function () {
+    return rand() + rand();
+  };
+
+  let requiredCheckboxes = jQuery(":checkbox[required]");
+
+  requiredCheckboxes.change(function () {
+    if (requiredCheckboxes.is(":checked")) {
+      requiredCheckboxes.removeAttr("required");
+      console.log("removed required in checkbox");
+    } else {
+      requiredCheckboxes.attr("required", "required");
+    }
+  });
+
+  jQuery(".birth").change(function () {
+    let day = jQuery("#day").val();
+    let month = jQuery("#month").val();
+    let year = jQuery("#year").val();
+    let dob = jQuery("#dob");
+    let dateOfBirh = [month, day, year];
+    dob.val(dateOfBirh.join("/"));
+  });
+
+  jQuery("#token").val(token());
+
+  jQuery("#birth").change(function (e) {
+    let dob = jQuery("#dob");
+    const date = new Date(e.target.value);
+    const day = date.getDate();
+    const month = date.getMonth();
+    const year = date.getFullYear();
+    const birthDate = [month, day, year];
+    dob.val(birthDate.join("/"));
+  });
+
+  jQuery("#se-form").submit(function (e) {
+    if (!checkForm()) {
+      e.preventDefault();
+    }
+  });
+  //   jQuery("#se-form").submit(function (e) {
+  //     e.preventDefault();
+  //     if (!checkRBBirthDate() && !checkEmail()) {
+  //       e.preventDefault();
+  //     }
+  //   });
+
+  function checkRBBirthDate() {
+    const date = new Date(jQuery("#birth").val());
+    const selectedDay = date.getDate();
+    const selectedMonth = date.getMonth();
+    const selectedYear = date.getFullYear();
+
+    var dateNow = new Date(Date.now());
+    var month = Number(selectedMonth);
+    var day = Number(selectedDay);
+    var year = Number(selectedYear);
+
+    var birthDate = new Date(year, month, day);
+    var yearDiff = dateNow.getFullYear() - birthDate.getFullYear();
+    var currentMonth = dateNow.getMonth() + 1 === birthDate.getMonth();
+    var dayBeforeToday = birthDate.getDate() <= dateNow.getDate();
+
+    if (yearDiff > 18 || (yearDiff >= 18 && birthDate.getMonth() < dateNow.getMonth()) || (yearDiff >= 18 && currentMonth && dayBeforeToday)) {
+      return true;
+    } else {
+      var bdErrEl = document.getElementById("birthdate-error");
+      if (bdErrEl !== null) {
+        bdErrEl.style.display = "block";
+        var birthEl = document.getElementsByClassName("birth");
+        for (var i = 0; i < birthEl.length; i++) {
+          birthEl[i].className = "birth input-error";
+        }
+      }
+      return false;
+    }
+
+    return false;
+  }
+
+  /* Cookie terms and condition */
+  jQuery("body").delegate("#cookie-confirm", "click", function () {
+    var now = new Date();
+    var time = now.getTime();
+    var expireTime = time + 315569520000; // 10 Years
+    now.setTime(expireTime);
+    document.cookie = "sa-cookie-consent-accepted-production=1;expires=" + now.toUTCString() + ";domain=.seeking.com;path=/";
+    jQuery(".cookie-container").remove();
+  });
+
+  const getCookieValue = (name) => {
+    var cookieList = document.cookie.match("(^|;)\\s*" + name + "\\s*=\\s*([^;]+)");
+    if (cookieList) {
+      return cookieList.pop();
+    } else {
+      return "";
+    }
+  };
+
+  if (getCookieValue("sa-cookie-consent-accepted-production")) {
+    jQuery(".cookie-container").remove();
+  } else {
+    jQuery(".cookie-container").removeClass("hide");
+  }
+
+  /* Play Glossary Audio */
+  jQuery("#glosarry-child-audio-button").on("click", function (e) {
+    jQuery("#glossary-child-audio audio")[0].play();
+  });
+});
+
+/* Custom Scroll / Video Play */
+function playAnimation(mode) {
+  var $ = jQuery;
+  var objectID = "#animation-" + mode;
+  $("html, body").animate(
+    {
+      scrollTop: $(objectID).offset().top - 75,
+    },
+    750
+  );
+  setTimeout(function () {
+    $(objectID).trigger("play");
+  }, 500);
+}
+
+jQuery(document).ready(function () {
+  function isValidEmailAddress(emailAddress) {
+    var pattern = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/i;
+    return pattern.test(emailAddress);
+  }
+
+  jQuery("#support-form").on("change", "input, select", function (e) {
+    jQuery("#send-support-ticket").removeAttr("disabled");
+  });
+
+  jQuery("#send-support-ticket").on("click", function (e) {
+    // Reset validation errors from BE
+    jQuery(".validation-error").hide();
+
+    // Validate the form before submission
+    var missingField = false;
+    if (!isValidEmailAddress(jQuery("#person_email").val()) || jQuery("#person_email").val() == "") {
+      jQuery(".validate-email").css("display", "block");
+      missingField = true;
+    } else {
+      jQuery(".validate-email").css("display", "none");
+    }
+    if (jQuery("#category_id").val() == "") {
+      jQuery(".validate-category").css("display", "block");
+      missingField = true;
+    } else {
+      jQuery(".validate-category").css("display", "none");
+    }
+    if (jQuery("#ticket-subject").val() == "") {
+      jQuery(".validate-subject").css("display", "block");
+      jQuery("#validate-subject-length").hide();
+
+      missingField = true;
+    } else if (jQuery("#ticket-subject").val().length > 100) {
+      jQuery(".validate-subject").css("display", "none");
+      jQuery("#validate-subject-length").show();
+
+      missingField = true;
+    } else {
+      jQuery(".validate-subject").css("display", "none");
+      jQuery("#validate-subject-length").hide();
+    }
+    if (jQuery("#ticket-message").val() == "") {
+      jQuery(".validate-message").css("display", "block");
+      missingField = true;
+    } else {
+      jQuery(".validate-message").css("display", "none");
+    }
+    if (missingField == true) {
+      return false;
+    }
+    jQuery("#send-support-ticket").attr("disabled", "disabled").val("Please wait...");
+    jQuery
+      .ajax({
+        method: "POST",
+        url: "/wp-json/skng/v1/ticket",
+        data: constructPayload(jQuery("#support-form").serializeArray()),
+      })
+      .done(function (resp) {
+        window.location.href = window.location.origin + "/ticket/created";
+      })
+      .fail(function (jqXHR, textStatus) {
+        console.log(textStatus);
+      });
+    return true;
+  });
+
+  function constructPayload(formArray) {
+    const payload = {};
+    formArray.forEach((e) => {
+      payload[e.name] = e.value;
+    });
+    return payload;
+  }
+
+  function checkBirthdate() {
+    var bdM = document.getElementById("month").value;
+
+    var bdD = document.getElementById("day").value;
+
+    var bdY = document.getElementById("year").value;
+
+    var dateNow = new Date(Date.now());
+    var month = Number(bdM);
+    var day = Number(bdD);
+    var year = Number(bdY);
+
+    var birthDate = new Date(year, month, day);
+    var yearDiff = dateNow.getFullYear() - birthDate.getFullYear();
+    var currentMonth = dateNow.getMonth() + 1 === birthDate.getMonth();
+    var dayBeforeToday = birthDate.getDate() <= dateNow.getDate();
+
+    if (yearDiff > 18 || (yearDiff >= 18 && birthDate.getMonth() < dateNow.getMonth()) || (yearDiff >= 18 && currentMonth && dayBeforeToday)) {
+      return true;
+    } else {
+      var bdErrEl = document.getElementById("birthdate-error");
+      if (bdErrEl !== null) {
+        bdErrEl.style.display = "block";
+        var birthEl = document.getElementsByClassName("birth");
+        for (var i = 0; i < birthEl.length; i++) {
+          birthEl[i].className = "birth input-error";
+        }
+      }
+      return false;
+    }
+
+    return false;
+  }
+
+  function checkEmail() {
+    var emailEl = document.getElementById("email");
+    var emailErrEl = document.getElementById("email-error");
+    var reg = /^[a-zA-Z0-9.!#$%&'*+\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])*(\.\w{2,3})+$/;
+
+    if (emailEl !== null && reg.test(emailEl.value)) {
+      return true;
+    } else {
+      if (emailErrEl !== null) {
+        emailErrEl.style.display = "block";
+      }
+      emailEl.className = "email input-error";
+      return false;
+    }
+  }
+
+  function resetErrors() {
+    var emailEl = document.getElementById("email");
+    var emailErrEl = document.getElementById("email-error");
+    var bdErrEl = document.getElementById("birthdate-error");
+
+    if (emailErrEl !== null) {
+      emailErrEl.style.display = "none";
+    }
+    emailEl.className = "email";
+
+    if (bdErrEl !== null) {
+      bdErrEl.style.display = "none";
+      var birthEl = document.getElementsByClassName("birth");
+      for (var i = 0; i < birthEl.length; i++) {
+        birthEl[i].className = "birth";
+      }
+    }
+  }
+
+  function checkForm() {
+    resetErrors();
+    if (checkBirthdate() && checkEmail()) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  let rand = function () {
+    return Math.random().toString(36).substr(2);
+  };
+
+  let token = function () {
+    return rand() + rand();
+  };
+
+  let requiredCheckboxes = jQuery(":checkbox[required]");
+
+  requiredCheckboxes.change(function () {
+    if (requiredCheckboxes.is(":checked")) {
+      requiredCheckboxes.removeAttr("required");
+      console.log("removed required in checkbox");
+    } else {
+      requiredCheckboxes.attr("required", "required");
+    }
+  });
+
+  jQuery(".birth").change(function () {
+    let day = jQuery("#day").val();
+    let month = jQuery("#month").val();
+    let year = jQuery("#year").val();
+    let dob = jQuery("#dob");
+    let dateOfBirh = [month, day, year];
+    dob.val(dateOfBirh.join("/"));
+  });
+
+  jQuery("#token").val(token());
+
+  jQuery("#birth").change(function (e) {
+    let dob = jQuery("#dob");
+    const date = new Date(e.target.value);
+    const day = date.getDate();
+    const month = date.getMonth();
+    const year = date.getFullYear();
+    const birthDate = [month, day, year];
+    dob.val(birthDate.join("/"));
+  });
+
+  jQuery("#se-form").submit(function (e) {
+    if (!checkForm()) {
+      e.preventDefault();
+    }
+  });
+  //   jQuery("#se-form").submit(function (e) {
+  //     e.preventDefault();
+  //     if (!checkRBBirthDate() && !checkEmail()) {
+  //       e.preventDefault();
+  //     }
+  //   });
+
+  function checkRBBirthDate() {
+    const date = new Date(jQuery("#birth").val());
+    const selectedDay = date.getDate();
+    const selectedMonth = date.getMonth();
+    const selectedYear = date.getFullYear();
+
+    var dateNow = new Date(Date.now());
+    var month = Number(selectedMonth);
+    var day = Number(selectedDay);
+    var year = Number(selectedYear);
+
+    var birthDate = new Date(year, month, day);
+    var yearDiff = dateNow.getFullYear() - birthDate.getFullYear();
+    var currentMonth = dateNow.getMonth() + 1 === birthDate.getMonth();
+    var dayBeforeToday = birthDate.getDate() <= dateNow.getDate();
+
+    if (yearDiff > 18 || (yearDiff >= 18 && birthDate.getMonth() < dateNow.getMonth()) || (yearDiff >= 18 && currentMonth && dayBeforeToday)) {
+      return true;
+    } else {
+      var bdErrEl = document.getElementById("birthdate-error");
+      if (bdErrEl !== null) {
+        bdErrEl.style.display = "block";
+        var birthEl = document.getElementsByClassName("birth");
+        for (var i = 0; i < birthEl.length; i++) {
+          birthEl[i].className = "birth input-error";
+        }
+      }
+      return false;
+    }
+
+    return false;
+  }
+
+  /* Cookie terms and condition */
+  jQuery("body").delegate("#cookie-confirm", "click", function () {
+    var now = new Date();
+    var time = now.getTime();
+    var expireTime = time + 315569520000; // 10 Years
+    now.setTime(expireTime);
+    document.cookie = "sa-cookie-consent-accepted-production=1;expires=" + now.toUTCString() + ";domain=.seeking.com;path=/";
+    jQuery(".cookie-container").remove();
+  });
+
+  const getCookieValue = (name) => {
+    var cookieList = document.cookie.match("(^|;)\\s*" + name + "\\s*=\\s*([^;]+)");
+    if (cookieList) {
+      return cookieList.pop();
+    } else {
+      return "";
+    }
+  };
+
+  if (getCookieValue("sa-cookie-consent-accepted-production")) {
+    jQuery(".cookie-container").remove();
+  } else {
+    jQuery(".cookie-container").removeClass("hide");
+  }
+
+  /* Play Glossary Audio */
+  jQuery("#glosarry-child-audio-button").on("click", function (e) {
+    jQuery("#glossary-child-audio audio")[0].play();
+  });
+});
+
+/* Custom Scroll / Video Play */
+function playAnimation(mode) {
+  var $ = jQuery;
+  var objectID = "#animation-" + mode;
+  $("html, body").animate(
+    {
+      scrollTop: $(objectID).offset().top - 75,
+    },
+    750
+  );
+  setTimeout(function () {
+    $(objectID).trigger("play");
+  }, 500);
+}
+
+/* Testimonial Scroll top card -- Moved to On page 
+jQuery(window).scroll(function () {
+  jQuery(".animate-bottom-up .gb-container").each(function () {
+    if (jQuery(this) && !jQuery(this).hasClass("done")) {
+      var top_of_element = jQuery(this).offset().top;
+      var bottom_of_element = jQuery(this).offset().top + jQuery(this).outerHeight();
+      var bottom_of_screen = jQuery(window).scrollTop() + jQuery(window).innerHeight();
+      var top_of_screen = jQuery(window).scrollTop();
+
+      if (bottom_of_screen > top_of_element && top_of_screen < bottom_of_element) {
+        console.log("done", jQuery(this).find(".wp-block-column"));
+        jQuery(this)
+          .find(".wp-block-column")
+          .each(function () {
+            jQuery(this).css("transform", "translateY(0)");
+          });
+        jQuery(this).addClass("done");
+      }
+    }
+  });
+}); */
+
+/** Change SAWL Local Cookie Value on Language Switcher Click **/
+jQuery('.wpml-ls-link').click(function(e){
+	var language = e.target.innerText;
+	var sawl_value = "en_US";
+	if(language == "English")
+		sawl_value = "en_US";
+	else if(language == "Español")
+		sawl_value = "es_ES";
+	else if(language == "Français")
+		sawl_value = "fr_FR";
+	else if(language == "Deutsch")
+		sawl_value = "de_DE";
+	else if(language == "中文(简)")
+		sawl_value = "zh_CN";
+	else if(language == "Nederlands")
+		sawl_value = "nl_NL";
+	else if(language == "Português")
+		sawl_value = "pt_PT";
+	else if(language == "日本語")
+		sawl_value = "ja_JP";
+	const d = new Date();
+  	d.setTime(d.getTime() + (60 * 60 * 24 * 365 * 1000));
+	document.cookie = "sawl_local_cookie=" + sawl_value + "; expires=" + d.toGMTString() + "; domain=.seeking.com; path=/";
+});

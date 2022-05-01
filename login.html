@@ -1,0 +1,79 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Log in</title>
+    <script type="text/javascript" src="register.js"></script>  
+    <link rel="stylesheet" href="login.css">
+    
+</head>
+<body>
+    <div id="bg"></div>
+
+    <form>
+        <div class="col-lg-8 col-md-12 col-sm-9 col-xs-12 form-box text-center"></div>
+        <div class="form-field">
+        <input type="email" placeholder="Email / Username" required/>
+      </div>
+      
+      <div class="form-field">
+        <input type="password" placeholder="Password" required/>   
+      </div>
+      
+      
+        <div class="form-field">
+          <button class="btnl" type="submit">Log in</button>
+        </div>
+      
+        
+        <div class="col-6 text-right">
+            <a href="forget.html" class="forget-link">Forget Password</a>
+        </div>
+      
+   
+        &nbsp
+      <div class="ctext-enter mb-2">
+        <div class="mb-3" style="color: #777">or login with</div>
+
+          <a href="" class="btn btn-social btn-facebook">facebook</a>
+
+          <a href="" class="btn btn-social btn-google">google</a>
+
+          <a href="" class="btn btn-social btn-twitter">twitter</a>
+        </div>
+        <div style="color: #777">Don't have an account
+            <a href="register.html" class="register-link">Register here</a>
+        </div>
+    </form>
+        
+    
+    <script>
+        var x=document.getElementById('login');
+		var y=document.getElementById('register');
+		var z=document.getElementById('btn');
+		function register()
+		{
+			x.style.left='-400px';
+			y.style.left='50px';
+			z.style.left='110px';
+		}
+		function login()
+		{
+			x.style.left='50px';
+			y.style.left='450px';
+			z.style.left='0px';
+		}
+	</script>
+	<script>
+        var modal = document.getElementById('login-form');
+        window.onclick = function(event) 
+        {
+            if (event.target == modal) 
+            {
+                modal.style.display = "none";
+            }
+        }
+    </script>
+</body>
+</html>
